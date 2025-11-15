@@ -1,9 +1,12 @@
-import pygame
 import random
+import pygame
 
 pygame.init()
 
-x, y, width, height, steps, counter = 20, 20, 40, 40, 600, 0
+x, y = 10, 10
+width, height = 40, 40
+steps = 600
+counter = 0
 
 level = [['x' for _ in range(width)] for _ in range(height)]
 
@@ -28,12 +31,11 @@ for row in level:
     print(" ".join(row))
 
 class Player:
-    def __init__(self, x, y, screen, offset):
-        self.x = x
-        self.y = y
+    def __init__(self, screen, offset):
         self.screen = screen
         self.offset = offset
-        self.vel = [0, 0]
+
+        self.x, self.y = 1000, 1000
         self.rect = pygame.Rect(self.x - self.offset[0], self.y - self.offset[1], 40, 40)
 
     def draw(self):
@@ -43,39 +45,27 @@ class Player:
         keys = pygame.key.get_pressed()
 
         if keys[pygame.K_w]:
-            self.vel[1] -= 0.2
+            self.y -= 5
         if keys[pygame.K_s]:
-            self.vel[1] += 0.2
+            self.y += 5
         if keys[pygame.K_a]:
-            self.vel[0] -= 0.2
+            self.x -= 5
         if keys[pygame.K_d]:
-            self.vel[0] += 0.2
-
-        self.vel[0] = max(-3, min(3, self.vel[0]))
-        self.vel[1] = max(-3, min(3, self.vel[1]))
-        friction = 0.98
-        self.vel[0] *= friction
-        self.vel[1] *= friction
-        
-    def collision(self):
-        self.x += self.vel[0]
-        self.y += self.vel[1]
+            self.x += 5
 
         self.rect.topleft = (self.x - self.offset[0], self.y - self.offset[1])
 
     def update(self):
         self.draw()
         self.movement()
-        self.collision()
 
 class Game:
     def __init__(self):
         self.screen = pygame.display.set_mode((700, 700))
-        self.mini_display = pygame.Surface((4000, 4000))
         self.clock = pygame.time.Clock()
         self.events = pygame.event.get()
         self.offset = [0, 0]
-        self.pl = Player(2000, 2000, self.screen, self.offset)
+        self.pl = Player(self.screen, self.offset)
         self.rects = []
 
     def draw_map(self):
@@ -85,11 +75,10 @@ class Game:
                     self.rects.append([x, y])
 
     def update(self):
-        run = True
         self.draw_map()
+        run = True
         while run:
             self.screen.fill((0, 0, 0))
-            self.mini_display.fill((0, 0, 0))
             self.events = pygame.event.get()
 
             self.offset[0] += (self.pl.x - self.offset[0] - 330)/10
@@ -101,14 +90,7 @@ class Game:
 
             for rect in self.rects[:]:
                 pygame.draw.rect(self.screen, (255, 0, 0), pygame.Rect(rect[0] * 100 - self.offset[0], rect[1] * 100 - self.offset[1], 100, 100))
-                pygame.draw.rect(self.mini_display, (255, 0, 0), pygame.Rect(rect[0] * 100, rect[1] * 100, 100, 100))
             self.pl.update()
-            pygame.draw.rect(self.mini_display, (255, 255, 255), pygame.Rect(self.pl.x, self.pl.y, 40, 40))
-            
-            display = pygame.transform.scale_by(self.mini_display, 0.03)
-
-            self.screen.blit(display, (10, 10))
-            pygame.draw.rect(self.screen, (255, 255, 255), pygame.Rect(10, 10, display.get_size()[0], display.get_size()[1]), 1)
 
             pygame.display.update()
             self.clock.tick(60)
